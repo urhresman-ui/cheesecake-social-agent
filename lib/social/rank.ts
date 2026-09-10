@@ -1,5 +1,6 @@
 import sharp from "sharp";
 import { getFileBuffer, type DriveFile } from "@/lib/drive";
+import { extractJson } from "@/lib/social/json";
 
 const MAX_CANDIDATES = 20;
 const THUMB_SIZE = 320;
@@ -94,10 +95,10 @@ export async function pickBestImage(candidates: DriveFile[]): Promise<RankedPick
 
     const data = await response.json();
     const text: string = data.content?.[0]?.text?.trim() ?? "{}";
-    const parsed = JSON.parse(text) as {
+    const parsed = extractJson<{
       groups?: Array<{ fileIds: string[]; bestFileId: string }>;
       recommendedFileId?: string;
-    };
+    }>(text);
 
     const validIds = new Set(pool.map((f) => f.id));
     const recommended = parsed.recommendedFileId;

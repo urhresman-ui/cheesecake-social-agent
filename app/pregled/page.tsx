@@ -153,15 +153,19 @@ function ProposalCard({
         </p>
       )}
 
-      <label className="text-xs text-ink-soft">
-        IG opis (caption) za kopiranje
-        <textarea
-          className="mt-1 w-full rounded border border-gold-soft bg-paper p-2 text-sm"
-          rows={5}
-          value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-        />
-      </label>
+      {!(proposal.type === "STORY" && proposal.kind === "IMAGE") && (
+        <label className="text-xs text-ink-soft">
+          {proposal.type === "POST"
+            ? "IG opis (caption) za kopiranje"
+            : "Predlog besedila za nalepko (interno, ni IG opis - Stories nimajo opisa)"}
+          <textarea
+            className="mt-1 w-full rounded border border-gold-soft bg-paper p-2 text-sm"
+            rows={proposal.type === "POST" ? 5 : 2}
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+          />
+        </label>
+      )}
 
       {error && <p className="text-xs text-red-700">{error}</p>}
 

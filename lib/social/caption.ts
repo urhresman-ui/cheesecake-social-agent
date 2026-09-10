@@ -1,4 +1,5 @@
 import { buildCaptionPrompt } from "@/lib/social/captionPrompt";
+import { extractJson } from "@/lib/social/json";
 import type { ContentType } from "@/lib/social/store";
 
 export type DraftedCaption = {
@@ -42,14 +43,24 @@ export async function draftCaption(params: {
   const text: string = data.content?.[0]?.text?.trim() ?? "{}";
 
   try {
-    const parsed = JSON.parse(text);
+    const parsed = extractJson<{
+      burnText?: string;
+      caption?: string;
+      editSuggestion?: string;
+    }>(text);
+    const burnText = typeof parsed.burnText === "string" ? parsed.burnText : undefined;
+    const caption = typeof parsed.caption === "string" ? parsed.caption : undefined;
     return {
-      burnText: typeof parsed.burnText === "string" ? parsed.burnText : undefined,
-      caption: typeof parsed.caption === "string" ? parsed.caption : "",
+      burnText,
+      // STORY + IMAGE ne vrne "caption" (glej captionPrompt.ts) - caption
+      // polje na proposalu naj kljub temu ne bo prazno, zato se v tem
+      // primeru zrcali iz burnText.
+      caption: caption ?? burnText ?? "",
       editSuggestion:
         typeof parsed.editSuggestion === "string" ? parsed.editSuggestion : undefined,
     };
-  } catch {
+  } catch (error) {
+    console.error("draftCaption: failed to parse model output", error, text);
     // Model ni vrnil čistega JSON-a - uporabi surovo besedilo kot caption,
     // da predlog vseeno pride do Urha (namesto da cron pade).
     return { caption: text };
