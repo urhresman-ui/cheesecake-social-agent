@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
+import sharp from "sharp";
 import { isAgentAuthorized } from "@/lib/social/auth";
 import { getProposal } from "@/lib/social/store";
 import { getFileBuffer } from "@/lib/drive";
-import { renderEditedImage } from "@/lib/social/image";
 
 // sharp in googleapis potrebujeta Node runtime (native bindings), ne edge.
 export const runtime = "nodejs";
 
+const MAX_DIMENSION = 1600;
+
 /**
- * Vrne urejeno (obrezano, s presetom, po želji z vžganim besedilom)
- * različico fotografije za dani proposal. Besedilo se generira sproti iz
- * `text` query parametra, da se predogled na /pregled osveži ob urejanju
- * captiona, brez shranjevanja vmesne slike.
+ * Vrne IZVIRNO fotografijo za dani proposal - agent slike ne obreže, ne
+ * ureja barv in ne vžiga besedila (glej README: to je bila prejšnja
+ * zasnova, opuščena, ker je Vercel strežnik brez fontov za šumnike
+ * izpisoval prazne znake, poleg tega je Urh raje ohranja polni nadzor nad
+ * vizualnim urejanjem v Instagram aplikaciji). Edina obdelava je smiseln
+ * resize za hitrejši prikaz na `/pregled` (ne spremeni razmerja/barv).
  */
 export async function GET(
   request: NextRequest,
@@ -30,22 +34,27 @@ export async function GET(
     return new NextResponse("Ta proposal ni fotografija", { status: 400 });
   }
 
-  const text = request.nextUrl.searchParams.get("text") ?? proposal.burnText ?? "";
   const download = request.nextUrl.searchParams.get("download") === "1";
-
   const original = await getFileBuffer(proposal.driveFileId);
-  const edited = await renderEditedImage(original, { type: proposal.type, text });
+
+  const output = download
+    ? original
+    : await sharp(original)
+        .rotate()
+        .resize({ width: MAX_DIMENSION, height: MAX_DIMENSION, fit: "inside", withoutEnlargement: true })
+        .jpeg({ quality: 88 })
+        .toBuffer();
 
   const headers = new Headers({
-    "Content-Type": "image/jpeg",
+    "Content-Type": download ? proposal.mimeType : "image/jpeg",
     "Cache-Control": "no-store",
   });
   if (download) {
-    headers.set(
-      "Content-Disposition",
-      `attachment; filename="${proposal.type.toLowerCase()}-${proposal.id.slice(0, 8)}.jpg"`
-    );
+    const ext = proposal.driveFileName.includes(".")
+      ? proposal.driveFileName.slice(proposal.driveFileName.lastIndexOf("."))
+      : ".jpg";
+    headers.set("Content-Disposition", `attachment; filename="${proposal.id.slice(0, 8)}${ext}"`);
   }
 
-  return new NextResponse(new Uint8Array(edited), { headers });
+  return new NextResponse(new Uint8Array(output), { headers });
 }

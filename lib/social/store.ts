@@ -15,7 +15,12 @@ export type Proposal = {
   driveViewUrl: string;
   mimeType: string;
   caption: string;
-  burnText?: string;
+  /**
+   * Kratek predlog besedila (za post: napis na sliki, za story: nalepka
+   * na storyju) - je zgolj PREDLOG za Urha, da ga po želji sam doda v
+   * Instagram aplikaciji. Agent ničesar ne vžge na sliko.
+   */
+  shortText?: string;
   editSuggestion?: string;
   /**
    * Drive file ID-ji vizualno podobnih/skoraj-podvojenih fotografij (npr.
@@ -77,7 +82,7 @@ export async function listProposals(status?: ProposalStatus): Promise<Proposal[]
 
 export async function updateProposal(
   id: string,
-  patch: Partial<Pick<Proposal, "status" | "caption" | "burnText" | "completedAt">>
+  patch: Partial<Pick<Proposal, "status" | "caption" | "shortText" | "completedAt">>
 ): Promise<Proposal | null> {
   const existing = await getProposal(id);
   if (!existing) return null;

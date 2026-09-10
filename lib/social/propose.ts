@@ -44,7 +44,7 @@ export async function runProposal(type: ContentType): Promise<Proposal | null> {
     driveViewUrl: selected.viewUrl,
     mimeType: selected.mimeType,
     caption: drafted.caption,
-    burnText: drafted.burnText,
+    shortText: drafted.shortText,
     editSuggestion: drafted.editSuggestion,
     siblingFileIds: selected.siblingFileIds,
   });

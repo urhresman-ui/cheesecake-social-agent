@@ -4,7 +4,7 @@ import { getRecentFeedCaptions } from "@/lib/social/feed";
 import type { ContentType } from "@/lib/social/store";
 
 export type DraftedCaption = {
-  burnText?: string;
+  shortText?: string;
   caption: string;
   editSuggestion?: string;
 };
@@ -25,7 +25,10 @@ export async function draftCaption(params: {
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
+      // Sonnet namesto Haiku: bistveno boljše obvladovanje slovenske
+      // slovnice/sklanjanja pri tako majhnem volumnu klicev (nekaj na
+      // teden) je strošek zanemarljiv.
+      model: "claude-sonnet-5",
       max_tokens: 500,
       system,
       messages: [
@@ -46,18 +49,18 @@ export async function draftCaption(params: {
 
   try {
     const parsed = extractJson<{
-      burnText?: string;
+      shortText?: string;
       caption?: string;
       editSuggestion?: string;
     }>(text);
-    const burnText = typeof parsed.burnText === "string" ? parsed.burnText : undefined;
+    const shortText = typeof parsed.shortText === "string" ? parsed.shortText : undefined;
     const caption = typeof parsed.caption === "string" ? parsed.caption : undefined;
     return {
-      burnText,
+      shortText,
       // STORY + IMAGE ne vrne "caption" (glej captionPrompt.ts) - caption
       // polje na proposalu naj kljub temu ne bo prazno, zato se v tem
-      // primeru zrcali iz burnText.
-      caption: caption ?? burnText ?? "",
+      // primeru zrcali iz shortText.
+      caption: caption ?? shortText ?? "",
       editSuggestion:
         typeof parsed.editSuggestion === "string" ? parsed.editSuggestion : undefined,
     };

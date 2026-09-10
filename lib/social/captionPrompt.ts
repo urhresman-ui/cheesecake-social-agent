@@ -17,10 +17,28 @@ ZNAMKIN GLAS (Us & Cheesecake):
 - Ton: eleganten, indulgenten, a igriv - vseeno jedrnat, brez patetike.
 - Nikoli ne uporabljaj pomišljajev (— ali –). Namesto tega vejice, pike ali
   veznika "in"/"ampak".
-- Jezik: slovenščina.
-- Emoji uporabljaj zmerno in naravno (npr. 🍰 🍫 🍓 💛 ✨), ne v vsakem stavku.
+- Jezik: slovenščina. BODI SLOVNIČNO NATANČEN, sploh pri sklanjanju
+  samostalnikov (npr. pravilno "v vsakem kosu" - mestnik, NE "v vsakem
+  kosa"; "iz cheesecaka", "s cheesecakom" itd.). Če nisi prepričan o obliki
+  besede, izberi preprostejšo formulacijo, ki se ji izogne, namesto da
+  tvegaš napako.
+- Emoji uporabljaj zmerno in naravno (npr. 🍰 🍫 🍓 💛 ✨), ne v vsakem stavku
+  in ne v vsakem predlogu - pogosto tudi brez.
 - Ne izmišljuj cen, datumov dogodkov ali specifičnih ponudb, ki jih ne
-  poznaš - drži se splošnega, evergreen besedila o izdelku/razpoloženju.`;
+  poznaš - drži se splošnega, evergreen besedila o izdelku/razpoloženju.
+
+IZOGIBAJ SE (zveni po generičnem marketinškem/AI besedilu, "cringe"):
+- Klišejske fraze: "razvajajte se", "prepustite se", "doživite pravo
+  kulinarično uživanje", "trenutek zase", "sladka poslastica čaka na vas",
+  "brez krivde", karkoli, kar zveni kot template za katero koli slaščičarno.
+- Vsiljena/pretirana navdušenost, klicaji na vsakem koraku, retorična
+  vprašanja tipa "Kaj če bi si danes privoščili...?".
+- Da bi VSAK predlog vseboval CTA ali poziv k naročilu - večina naj bo samo
+  iskren, konkreten opis (kaj je na sliki, zakaj je dober, kako je
+  narejen), brez prodajnega zaključka. CTA dodaj kvečjemu občasno, ne
+  sistematično.
+- Prazne fraze brez vsebine. Raje eno konkretno, specifično opažanje o tej
+  sliki/okusu kot splošno hvalo.`;
 
 function recentPostsSection(recentCaptions: string[]): string {
   if (recentCaptions.length === 0) return "";
@@ -28,12 +46,14 @@ function recentPostsSection(recentCaptions: string[]): string {
     .slice(0, 15)
     .map((c, i) => `${i + 1}. ${c.replace(/\s+/g, " ").slice(0, 200)}`)
     .join("\n");
-  return `\nNEDAVNE OBJAVE NA NAŠEM PRAVEM INSTAGRAM FEEDU (od najnovejše):
+  return `\nZADNJE PRAVE OBJAVE NA NAŠEM INSTAGRAM FEEDU (od najnovejše) - TO JE
+PRAVI GLAS ZNAMKE, posnemaj njihovo dolžino, ton, ritem in slovnične
+vzorce natančneje kot splošna navodila zgoraj:
 ${list}
 
-Ne ponavljaj istih besednih zvez, uvodnih stavkov ali vedno istega okusa/
-teme kot v teh nedavnih objavah. Poskrbi, da je nov predlog opazno drugačen
-po vsebini in formulaciji.\n`;
+Hkrati se izogibaj dobesednemu ponavljanju istih besednih zvez, uvodnih
+stavkov ali vedno istega okusa/teme kot v teh objavah - nov predlog naj bo
+opazno drugačen po vsebini in formulaciji, tudi če je slog enak.\n`;
 }
 
 function jsonOutputInstruction(shape: string): string {
@@ -45,9 +65,10 @@ Prvi znak tvojega odgovora mora biti "{", zadnji "}".`;
 
 /**
  * Sistemski prompt za pripravo Instagram vsebine, prilagojen glede na tip
- * objave (POST ima poln, daljši opis s hashtagi; STORY samo zelo kratko
- * besedilo, ker Instagram Stories nimajo objavljenega opisa - je zgolj
- * kratek vžgan napis na sliki oz. interna opomba za video).
+ * objave (POST ima poln, daljši opis; STORY samo zelo kratko besedilo, ker
+ * Instagram Stories nimajo objavljenega opisa - "shortText" je zgolj
+ * predlog, ki ga Urh po želji sam doda kot nalepko v Instagram aplikaciji,
+ * agent ničesar ne vžge na sliko).
  */
 export function buildCaptionPrompt(params: {
   type: ContentType;
@@ -62,23 +83,23 @@ export function buildCaptionPrompt(params: {
     return `${BRAND_VOICE}
 ${recent}
 NALOGA (feed POST, fotografija):
-1. "burnText": zelo kratek napis (do 8 besed, brez hashtagov, brez
-   emojijev), primeren za vžig direktno na fotografijo kot vizualni
-   poudarek (npr. ime okusa, kratek slogan).
-2. "caption": poln predlog Instagram opisa, 2-5 kratkih stavkov/odstavkov.
-   Na koncu lahko po potrebi doda kratek CTA (npr. povabilo k naročilu na
-   usandcheesecake.si ali DM) in 3-6 relevantnih hashtagov (variiraj, ne
-   uporabljaj vedno istih).
+1. "shortText": kratek predlog napisa (do 8 besed, brez hashtagov, brez
+   emojijev), ki bi ga Urh po želji lahko ročno dodal na sliko v Instagram
+   aplikaciji (npr. ime okusa). To je samo predlog, ni obvezen.
+2. "caption": predlog Instagram opisa, po dolžini in tonu podoben zgornjim
+   pravim objavam. Hashtage in CTA dodaj samo, če se prilega (glej "izogibaj
+   se" zgoraj) - ne v vsakem predlogu.
 
-${jsonOutputInstruction('{"burnText": "...", "caption": "..."}')}`;
+${jsonOutputInstruction('{"shortText": "...", "caption": "..."}')}`;
   }
 
   if (type === "POST" && kind === "VIDEO") {
     return `${BRAND_VOICE}
 ${recent}
 NALOGA (feed POST, video/reel):
-1. "caption": poln predlog Instagram opisa, 2-5 kratkih stavkov/odstavkov,
-   po potrebi s CTA (usandcheesecake.si ali DM) in 3-6 hashtagi.
+1. "caption": predlog Instagram opisa, po dolžini in tonu podoben zgornjim
+   pravim objavam. Hashtage in CTA dodaj samo, če se prilega - ne v vsakem
+   predlogu.
 2. "editSuggestion": kratko, KONKRETNO navodilo (1-2 stavka) kako naj Urh
    video obreže/uredi v Instagram aplikaciji pred objavo (kateri del
    posnetka poudariti, kam dodati tekst/nalepko). Bodi specifičen, ne piši
@@ -91,13 +112,12 @@ ${jsonOutputInstruction('{"caption": "...", "editSuggestion": "..."}')}`;
     return `${BRAND_VOICE}
 ${recent}
 NALOGA (STORY, fotografija):
-Instagram Stories NIMAJO objavljenega opisa - edino besedilo je to, kar se
-vžge direktno na sliko. Zato pripravi SAMO:
-"burnText": zelo kratek, udaren napis za na sliko. NAJVEČ 6 besed. Brez
-hashtagov, brez emojijev, brez podpisa. Primer dolžine: "Svež iz pečice" ali
-"Danes na jedilniku".
+Instagram Stories NIMAJO objavljenega opisa. Pripravi samo:
+"shortText": zelo kratek predlog besedila za nalepko na storyju, ki ga Urh
+po želji ROČNO doda v Instagram aplikaciji. NAJVEČ 6 besed. Brez hashtagov,
+brez emojijev, brez podpisa.
 
-${jsonOutputInstruction('{"burnText": "..."}')}`;
+${jsonOutputInstruction('{"shortText": "..."}')}`;
   }
 
   // STORY + VIDEO
@@ -108,8 +128,8 @@ Instagram Stories NIMAJO objavljenega opisa. Pripravi:
 1. "editSuggestion": kratko, KONKRETNO navodilo (1-2 stavka) kako naj Urh
    video obreže/uredi v Instagram aplikaciji pred objavo kot story
    (razmerje 9:16, kateri del posnetka poudariti, kam dodati tekst/nalepko).
-2. "burnText": zelo kratek predlog besedila za nalepko na storyju. NAJVEČ 6
-   besed, brez hashtagov, brez emojijev.
+2. "shortText": zelo kratek predlog besedila za nalepko na storyju, ki ga
+   Urh po želji ROČNO doda. NAJVEČ 6 besed, brez hashtagov, brez emojijev.
 
-${jsonOutputInstruction('{"editSuggestion": "...", "burnText": "..."}')}`;
+${jsonOutputInstruction('{"editSuggestion": "...", "shortText": "..."}')}`;
 }

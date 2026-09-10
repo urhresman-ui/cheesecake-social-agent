@@ -12,9 +12,9 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await request.json();
-  const patch: { caption?: string; burnText?: string } = {};
+  const patch: { caption?: string; shortText?: string } = {};
   if (typeof body.caption === "string") patch.caption = body.caption;
-  if (typeof body.burnText === "string") patch.burnText = body.burnText;
+  if (typeof body.shortText === "string") patch.shortText = body.shortText;
 
   const updated = await updateProposal(id, patch);
   if (!updated) {

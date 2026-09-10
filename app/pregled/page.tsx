@@ -10,18 +10,9 @@ type Proposal = {
   driveFileName: string;
   driveViewUrl: string;
   caption: string;
-  burnText?: string;
+  shortText?: string;
   editSuggestion?: string;
 };
-
-function useDebounced<T>(value: T, delayMs: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delayMs);
-    return () => clearTimeout(timer);
-  }, [value, delayMs]);
-  return debounced;
-}
 
 function ProposalCard({
   proposal,
@@ -33,8 +24,7 @@ function ProposalCard({
   onDone: (id: string) => void;
 }) {
   const [caption, setCaption] = useState(proposal.caption);
-  const [burnText, setBurnText] = useState(proposal.burnText ?? "");
-  const debouncedBurnText = useDebounced(burnText, 500);
+  const [shortText, setShortText] = useState(proposal.shortText ?? "");
   const [busy, setBusy] = useState<"complete" | "reject" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [gone, setGone] = useState(false);
@@ -46,7 +36,7 @@ function ProposalCard({
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ caption, burnText }),
+      body: JSON.stringify({ caption, shortText }),
     }).catch(() => undefined);
   }
 
@@ -99,7 +89,7 @@ function ProposalCard({
 
   const imageSrc =
     proposal.kind === "IMAGE"
-      ? `/api/social/image/${proposal.id}?token=${encodeURIComponent(token)}&text=${encodeURIComponent(debouncedBurnText)}`
+      ? `/api/social/image/${proposal.id}?token=${encodeURIComponent(token)}`
       : null;
 
   return (
@@ -117,23 +107,14 @@ function ProposalCard({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageSrc ?? undefined}
-            alt="Predogled urejene fotografije"
+            alt="Izbrana fotografija (neurejena)"
             className="w-full rounded-md border border-gold-soft"
           />
-          <label className="text-xs text-ink-soft">
-            Besedilo na sliki (kratko)
-            <textarea
-              className="mt-1 w-full rounded border border-gold-soft bg-paper p-2 text-sm"
-              rows={2}
-              value={burnText}
-              onChange={(e) => setBurnText(e.target.value)}
-            />
-          </label>
           <a
             className="text-xs underline text-ink-soft"
-            href={`/api/social/image/${proposal.id}?token=${encodeURIComponent(token)}&text=${encodeURIComponent(debouncedBurnText)}&download=1`}
+            href={`/api/social/image/${proposal.id}?token=${encodeURIComponent(token)}&download=1`}
           >
-            Prenesi gotovo sliko
+            Prenesi izvirno fotografijo
           </a>
         </>
       ) : (
@@ -153,14 +134,26 @@ function ProposalCard({
         </p>
       )}
 
-      {!(proposal.type === "STORY" && proposal.kind === "IMAGE") && (
+      {(proposal.type === "STORY" || proposal.kind === "IMAGE") && (
         <label className="text-xs text-ink-soft">
-          {proposal.type === "POST"
-            ? "IG opis (caption) za kopiranje"
-            : "Predlog besedila za nalepko (interno, ni IG opis - Stories nimajo opisa)"}
+          {proposal.type === "STORY"
+            ? "Predlog besedila za nalepko (dodaj sam v IG, če želiš)"
+            : "Predlog napisa na sliki (dodaj sam v IG, če želiš)"}
           <textarea
             className="mt-1 w-full rounded border border-gold-soft bg-paper p-2 text-sm"
-            rows={proposal.type === "POST" ? 5 : 2}
+            rows={2}
+            value={shortText}
+            onChange={(e) => setShortText(e.target.value)}
+          />
+        </label>
+      )}
+
+      {proposal.type === "POST" && (
+        <label className="text-xs text-ink-soft">
+          IG opis (caption) za kopiranje
+          <textarea
+            className="mt-1 w-full rounded border border-gold-soft bg-paper p-2 text-sm"
+            rows={5}
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
           />
