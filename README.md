@@ -51,6 +51,12 @@ predlagana. Video vsebina te AI primerjave nima (prehudo/nezanesljivo brez
 ffmpeg pipeline-a na Vercel serverless) - videi se ločijo samo po
 enostavnem "že uporabljen ali ne" pravilu.
 
+Poleg tega agent pred vsakim captionom (samo bere, ne objavlja) prebere
+zadnjih ~15 objav na pravem Instagram feedu (`lib/social/feed.ts`, Instagram
+Graph API) in prompt eksplicitno prosi, naj se izogne ponavljanju istih tem/
+besednih zvez. Neobvezno - brez `INSTAGRAM_ACCESS_TOKEN` env var se ta korak
+tiho preskoči.
+
 ## Datoteke
 
 - `lib/drive.ts` - Google Drive dostop (service account JWT), listanje mape,
@@ -62,6 +68,8 @@ enostavnem "že uporabljen ali ne" pravilu.
 - `lib/social/rank.ts` - Anthropic vision klic: med kandidatnimi
   fotografijami prepozna vizualno podobne/skoraj podvojene, izbere
   najboljšo v vsaki skupini.
+- `lib/social/feed.ts` - prebere zadnje objave na pravem IG feedu (samo
+  branje), da caption prompt ve, česa se izogibati.
 - `lib/social/caption.ts` + `captionPrompt.ts` - Anthropic klic za caption
   (znamkin slog Us & Cheesecake).
 - `lib/social/image.ts` - `sharp`: obreži na razmerje (post 4:5, story

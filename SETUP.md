@@ -51,7 +51,22 @@ uporabiš isti `RESEND_API_KEY`. Sicer ustvari novega na
 
 `NOTIFY_EMAIL` = `urh.resman@gmail.com` (ali kamor želiš prejemati obvestila).
 
-## 5. Vercel projekt
+## 5. Instagram Graph API token (samo za branje feeda, neobvezno)
+
+Agent lahko pred vsakim captionom prebere zadnjih ~15 objav na pravem Us &
+Cheesecake Instagram feedu, da se izogne ponavljanju istih tem/besednih
+zvez. To je **samo branje**, agent nič ne objavlja - varuje `lib/social/feed.ts`.
+
+Uporabi **isti dolgoživi token kot `jarvis-hub`** (isti Meta app, isti IG
+račun): skopiraj vrednost `INSTAGRAM_ACCESS_TOKEN` iz jarvis-hub Vercel
+projekta (Settings → Environment Variables) in jo dodaj tudi tukaj pod istim
+imenom. Ni potrebe po novem tokenu ali dodatnem scope-u - `instagram_business_basic`
+(branje) je vključen v vsak token za ta app.
+
+Če tega env var ne nastaviš, agent to preprosto preskoči (caption bo še
+vedno pripravljen, samo brez konteksta nedavnih objav) - ni nujen korak.
+
+## 6. Vercel projekt
 
 1. Na [vercel.com](https://vercel.com/new) uvozi repozitorij
    `urhresman-ui/cheesecake-social-agent`.
@@ -64,6 +79,7 @@ uporabiš isti `RESEND_API_KEY`. Sicer ustvari novega na
    | `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` | iz koraka 2 |
    | `GOOGLE_DRIVE_FOLDER_ID` | `1Ov7IeMt0XnYpgbYKfEcRRRDfFSVdi2lY` |
    | `ANTHROPIC_API_KEY` | tvoj Anthropic API ključ |
+   | `INSTAGRAM_ACCESS_TOKEN` | (neobvezno) ista vrednost kot v jarvis-hub - glej korak 5 |
    | `UPSTASH_REDIS_REST_URL` | iz koraka 3 |
    | `UPSTASH_REDIS_REST_TOKEN` | iz koraka 3 |
    | `RESEND_API_KEY` | iz koraka 4 |
@@ -75,7 +91,7 @@ uporabiš isti `RESEND_API_KEY`. Sicer ustvari novega na
 4. Deploy. Cron urniki iz `vercel.json` (tedenski post, delavniški story) se
    samodejno aktivirajo.
 
-## 6. Prvi ročni test
+## 7. Prvi ročni test
 
 Ko so env vars nastavljeni in je projekt deployan, lahko cron sprožiš ročno:
 
@@ -87,7 +103,7 @@ curl -X GET "https://<tvoj-projekt>.vercel.app/api/social/cron/propose-story" \
 Če v Drive mapi obstaja vsaj ena fotografija/video, bi moral prejeti e-mail
 s povezavo do `/pregled?token=<SOCIAL_AGENT_TOKEN>`.
 
-## 7. GitHub repo na Private (neobvezno)
+## 8. GitHub repo na Private (neobvezno)
 
 Repo je trenutno Public (GitHub je pri poskusu nastavitve na Private
 zahteval e-mail potrditev, ki je nisem mogel dokončati namesto tebe). Ker

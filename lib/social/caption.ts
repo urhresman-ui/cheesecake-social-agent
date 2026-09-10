@@ -1,5 +1,6 @@
 import { buildCaptionPrompt } from "@/lib/social/captionPrompt";
 import { extractJson } from "@/lib/social/json";
+import { getRecentFeedCaptions } from "@/lib/social/feed";
 import type { ContentType } from "@/lib/social/store";
 
 export type DraftedCaption = {
@@ -13,7 +14,8 @@ export async function draftCaption(params: {
   kind: "IMAGE" | "VIDEO";
   fileName: string;
 }): Promise<DraftedCaption> {
-  const system = buildCaptionPrompt(params);
+  const recentCaptions = await getRecentFeedCaptions();
+  const system = buildCaptionPrompt({ ...params, recentCaptions });
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",

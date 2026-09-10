@@ -22,6 +22,20 @@ ZNAMKIN GLAS (Us & Cheesecake):
 - Ne izmišljuj cen, datumov dogodkov ali specifičnih ponudb, ki jih ne
   poznaš - drži se splošnega, evergreen besedila o izdelku/razpoloženju.`;
 
+function recentPostsSection(recentCaptions: string[]): string {
+  if (recentCaptions.length === 0) return "";
+  const list = recentCaptions
+    .slice(0, 15)
+    .map((c, i) => `${i + 1}. ${c.replace(/\s+/g, " ").slice(0, 200)}`)
+    .join("\n");
+  return `\nNEDAVNE OBJAVE NA NAŠEM PRAVEM INSTAGRAM FEEDU (od najnovejše):
+${list}
+
+Ne ponavljaj istih besednih zvez, uvodnih stavkov ali vedno istega okusa/
+teme kot v teh nedavnih objavah. Poskrbi, da je nov predlog opazno drugačen
+po vsebini in formulaciji.\n`;
+}
+
 function jsonOutputInstruction(shape: string): string {
   return `IZHOD: Vrni SAMO golo besedilo veljavnega JSON-a, natanko v tej obliki:
 ${shape}
@@ -39,12 +53,14 @@ export function buildCaptionPrompt(params: {
   type: ContentType;
   kind: "IMAGE" | "VIDEO";
   fileName: string;
+  recentCaptions?: string[];
 }): string {
-  const { type, kind } = params;
+  const { type, kind, recentCaptions = [] } = params;
+  const recent = recentPostsSection(recentCaptions);
 
   if (type === "POST" && kind === "IMAGE") {
     return `${BRAND_VOICE}
-
+${recent}
 NALOGA (feed POST, fotografija):
 1. "burnText": zelo kratek napis (do 8 besed, brez hashtagov, brez
    emojijev), primeren za vžig direktno na fotografijo kot vizualni
@@ -59,7 +75,7 @@ ${jsonOutputInstruction('{"burnText": "...", "caption": "..."}')}`;
 
   if (type === "POST" && kind === "VIDEO") {
     return `${BRAND_VOICE}
-
+${recent}
 NALOGA (feed POST, video/reel):
 1. "caption": poln predlog Instagram opisa, 2-5 kratkih stavkov/odstavkov,
    po potrebi s CTA (usandcheesecake.si ali DM) in 3-6 hashtagi.
@@ -73,7 +89,7 @@ ${jsonOutputInstruction('{"caption": "...", "editSuggestion": "..."}')}`;
 
   if (type === "STORY" && kind === "IMAGE") {
     return `${BRAND_VOICE}
-
+${recent}
 NALOGA (STORY, fotografija):
 Instagram Stories NIMAJO objavljenega opisa - edino besedilo je to, kar se
 vžge direktno na sliko. Zato pripravi SAMO:
@@ -86,7 +102,7 @@ ${jsonOutputInstruction('{"burnText": "..."}')}`;
 
   // STORY + VIDEO
   return `${BRAND_VOICE}
-
+${recent}
 NALOGA (STORY, video):
 Instagram Stories NIMAJO objavljenega opisa. Pripravi:
 1. "editSuggestion": kratko, KONKRETNO navodilo (1-2 stavka) kako naj Urh
