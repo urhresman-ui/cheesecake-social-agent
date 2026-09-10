@@ -17,6 +17,15 @@ export type Proposal = {
   caption: string;
   burnText?: string;
   editSuggestion?: string;
+  /**
+   * Drive file ID-ji vizualno podobnih/skoraj-podvojenih fotografij (npr.
+   * isti posnetek iz burst-a), ki jih je AI izbor obravnaval kot eno
+   * skupino s to datoteko. Ob potrditvi (POST /api/social/complete) se vsi
+   * označijo kot uporabljeni, da agent kasneje ne predlaga skoraj enake
+   * fotografije kot "nove" vsebine. Prazno/odsotno za video ali kadar ni
+   * bilo podobnih kandidatov.
+   */
+  siblingFileIds?: string[];
   createdAt: number;
   completedAt?: number;
 };
@@ -84,7 +93,9 @@ export async function getUsedFileIds(type: ContentType): Promise<Set<string>> {
   return new Set(members);
 }
 
-export async function markFileUsed(type: ContentType, driveFileId: string): Promise<void> {
+export async function markFilesUsed(type: ContentType, driveFileIds: string[]): Promise<void> {
+  if (driveFileIds.length === 0) return;
   const redis = getRedis();
-  await redis.sadd(USED_KEY(type), driveFileId);
+  const [first, ...rest] = driveFileIds;
+  await redis.sadd(USED_KEY(type), first, ...rest);
 }

@@ -17,7 +17,12 @@ brez povezave z Instagram Graph API ali Meta appom).
 Vercel Cron (tedensko, pon)  ──► GET /api/social/cron/propose-post
 Vercel Cron (pon-pet)        ──► GET /api/social/cron/propose-story
                                     │
-                    izbere neuporabljeno Drive datoteko (lib/social/select.ts),
+                    izbere neuporabljeno Drive datoteko (lib/social/select.ts) -
+                    če je na voljo več neuporabljenih fotografij, jih
+                    Anthropic vision klic (lib/social/rank.ts) najprej
+                    združi po vizualni podobnosti (npr. burst posnetki iste
+                    torte) in izbere najboljšo v vsaki skupini, samo ta
+                    vstopi v izbor,
                     pokliče Anthropic API za caption (lib/social/caption.ts),
                     shrani proposal v Upstash Redis (lib/social/store.ts),
                     pošlje Urhu e-mail (lib/social/notify.ts) s povezavo do /pregled
@@ -30,9 +35,21 @@ Vercel Cron (pon-pet)        ──► GET /api/social/cron/propose-story
                     - video: povezava do izvirnika v Google Drive + predlog
                       urejanja (editSuggestion) + caption
                     - "Objavil sem, označi kot gotovo" -> POST /api/social/complete
-                      (samo označi proposal + Drive file kot uporabljen,
-                      NE objavlja nič na Instagram)
+                      (označi proposal + Drive file (in morebitne vizualno
+                      podobne "sorodne" datoteke iz istega AI izbora) kot
+                      uporabljene, NE objavlja nič na Instagram)
 ```
+
+Ista datoteka se za en tip (POST ali STORY) nikoli ne predlaga dvakrat -
+Upstash Redis hrani množico uporabljenih Drive file ID-jev po tipu
+(`lib/social/store.ts`). Za fotografije gre ta zaščita še korak dlje: ko je
+na voljo več neuporabljenih fotografij hkrati, `lib/social/rank.ts` z
+Anthropic vision klicem prepozna vizualno skoraj enake posnetke (npr. isti
+kader iz burst-a), izbere najboljšo v vsaki skupini in ob potrditvi označi
+kot uporabljene vse iz te skupine - ne samo tisto, ki je bila dejansko
+predlagana. Video vsebina te AI primerjave nima (prehudo/nezanesljivo brez
+ffmpeg pipeline-a na Vercel serverless) - videi se ločijo samo po
+enostavnem "že uporabljen ali ne" pravilu.
 
 ## Datoteke
 
@@ -40,7 +57,11 @@ Vercel Cron (pon-pet)        ──► GET /api/social/cron/propose-story
   streamanje datotek.
 - `lib/social/store.ts` - Upstash Redis shramba predlogov (status: `pending`
   → `done`/`rejected`) + set uporabljenih Drive datotek po tipu.
-- `lib/social/select.ts` - izbere naključno neuporabljeno datoteko.
+- `lib/social/select.ts` - izbere neuporabljeno datoteko (za fotografije
+  prek `rank.ts`, glej zgoraj).
+- `lib/social/rank.ts` - Anthropic vision klic: med kandidatnimi
+  fotografijami prepozna vizualno podobne/skoraj podvojene, izbere
+  najboljšo v vsaki skupini.
 - `lib/social/caption.ts` + `captionPrompt.ts` - Anthropic klic za caption
   (znamkin slog Us & Cheesecake).
 - `lib/social/image.ts` - `sharp`: obreži na razmerje (post 4:5, story

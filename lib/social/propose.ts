@@ -46,6 +46,7 @@ export async function runProposal(type: ContentType): Promise<Proposal | null> {
     caption: drafted.caption,
     burnText: drafted.burnText,
     editSuggestion: drafted.editSuggestion,
+    siblingFileIds: selected.siblingFileIds,
   });
 
   const label = type === "POST" ? "POST (tedenski)" : "STORY";

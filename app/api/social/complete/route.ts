@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAgentAuthorized } from "@/lib/social/auth";
-import { getProposal, updateProposal, markFileUsed } from "@/lib/social/store";
+import { getProposal, updateProposal, markFilesUsed } from "@/lib/social/store";
 
 /**
  * Urh je vsebino ročno objavil v Instagram aplikaciji in to potrdi tukaj -
@@ -22,7 +22,8 @@ export async function POST(request: NextRequest) {
     return new NextResponse("Not found", { status: 404 });
   }
 
-  await markFileUsed(proposal.type, proposal.driveFileId);
+  const usedIds = new Set([proposal.driveFileId, ...(proposal.siblingFileIds ?? [])]);
+  await markFilesUsed(proposal.type, [...usedIds]);
   const updated = await updateProposal(proposalId, {
     status: "done",
     completedAt: Date.now(),

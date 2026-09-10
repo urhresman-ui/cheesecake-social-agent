@@ -1,20 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { Readable } from "node:stream";
 import { isAgentAuthorized } from "@/lib/social/auth";
 import { getProposal } from "@/lib/social/store";
-import { getFileStream } from "@/lib/drive";
+import { getFileBuffer } from "@/lib/drive";
 import { renderEditedImage } from "@/lib/social/image";
 
 // sharp in googleapis potrebujeta Node runtime (native bindings), ne edge.
 export const runtime = "nodejs";
-
-async function streamToBuffer(stream: Readable): Promise<Buffer> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of stream) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-  }
-  return Buffer.concat(chunks);
-}
 
 /**
  * Vrne urejeno (obrezano, s presetom, po želji z vžganim besedilom)
@@ -42,8 +33,7 @@ export async function GET(
   const text = request.nextUrl.searchParams.get("text") ?? proposal.burnText ?? "";
   const download = request.nextUrl.searchParams.get("download") === "1";
 
-  const stream = await getFileStream(proposal.driveFileId);
-  const original = await streamToBuffer(stream);
+  const original = await getFileBuffer(proposal.driveFileId);
   const edited = await renderEditedImage(original, { type: proposal.type, text });
 
   const headers = new Headers({

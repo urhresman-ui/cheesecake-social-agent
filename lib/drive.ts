@@ -80,3 +80,12 @@ export async function getFileStream(fileId: string): Promise<Readable> {
   );
   return response.data as Readable;
 }
+
+export async function getFileBuffer(fileId: string): Promise<Buffer> {
+  const stream = await getFileStream(fileId);
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
+}
