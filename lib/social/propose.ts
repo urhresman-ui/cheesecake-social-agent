@@ -34,6 +34,7 @@ export async function runProposal(type: ContentType): Promise<Proposal | null> {
     type,
     kind: selected.kind,
     fileName: selected.name,
+    driveFileId: selected.id,
   });
 
   const proposal = await createProposal({

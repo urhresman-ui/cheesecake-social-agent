@@ -75,7 +75,14 @@ izogne ponavljanju istih tem/besednih zvez. Neobvezno - brez
 - `lib/social/feed.ts` - prebere zadnje objave na pravem IG feedu (samo
   branje), za slog in da caption prompt ve, česa se izogibati.
 - `lib/social/caption.ts` + `captionPrompt.ts` - Anthropic klic za besedilo
-  (znamkin slog Us & Cheesecake, brez klišejev, slovnično natančno).
+  (znamkin slog Us & Cheesecake, brez klišejev, slovnično natančno). Za
+  fotografije model dejansko VIDI sliko (vision), da ne ugiba/izmišlja
+  okusa iz imena datoteke - `captionPrompt.ts` vsebuje tudi ročno vzdrževan
+  seznam pravih okusov s spletne strani (posodobi, če se ponudba spremeni)
+  in prepoved izmišljanja drugih. Privzeto piše splošneje/razpoloženjsko,
+  konkreten okus omeni le, če ga res vidi na sliki.
+- `lib/social/thumbnail.ts` - pomanjša Drive fotografijo v majhen base64
+  JPEG za Anthropic vision klice (uporabljata `rank.ts` in `caption.ts`).
 - `lib/social/json.ts` - robustno izvleče JSON iz odgovora modela (modeli
   včasih dodajo markdown ograjice ali odvečne znake).
 - `lib/social/notify.ts` - Resend e-mail obvestila.

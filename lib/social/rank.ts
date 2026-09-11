@@ -1,9 +1,8 @@
-import sharp from "sharp";
-import { getFileBuffer, type DriveFile } from "@/lib/drive";
+import type { DriveFile } from "@/lib/drive";
 import { extractJson } from "@/lib/social/json";
+import { makeThumbnailBase64 } from "@/lib/social/thumbnail";
 
 const MAX_CANDIDATES = 20;
-const THUMB_SIZE = 320;
 
 export type RankedPick = {
   chosenId: string;
@@ -18,16 +17,6 @@ function shuffle<T>(items: T[]): T[] {
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
   return copy;
-}
-
-async function makeThumbnail(fileId: string): Promise<string> {
-  const original = await getFileBuffer(fileId);
-  const thumb = await sharp(original)
-    .rotate()
-    .resize(THUMB_SIZE, THUMB_SIZE, { fit: "inside", withoutEnlargement: true })
-    .jpeg({ quality: 60 })
-    .toBuffer();
-  return thumb.toString("base64");
 }
 
 const RANK_SYSTEM_PROMPT = `Pomagaš izbrati eno fotografijo za Instagram objavo znamke Us & Cheesecake
@@ -63,7 +52,7 @@ export async function pickBestImage(candidates: DriveFile[]): Promise<RankedPick
 
   try {
     const thumbs = await Promise.all(
-      pool.map(async (file) => ({ file, base64: await makeThumbnail(file.id) }))
+      pool.map(async (file) => ({ file, base64: await makeThumbnailBase64(file.id) }))
     );
 
     const content: Array<Record<string, unknown>> = [{ type: "text", text: RANK_SYSTEM_PROMPT }];
