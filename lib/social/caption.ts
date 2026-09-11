@@ -1,5 +1,6 @@
 import { buildCaptionPrompt } from "@/lib/social/captionPrompt";
 import { extractJson } from "@/lib/social/json";
+import { extractAnthropicText } from "@/lib/social/anthropic";
 import { getRecentFeedCaptions } from "@/lib/social/feed";
 import { makeThumbnailBase64 } from "@/lib/social/thumbnail";
 import type { ContentType } from "@/lib/social/store";
@@ -63,29 +64,39 @@ export async function draftCaption(params: {
   }
 
   const data = await response.json();
-  const text: string = data.content?.[0]?.text?.trim() ?? "{}";
+  const text: string = extractAnthropicText(data);
+  if (!text) {
+    throw new Error(
+      `Anthropic ni vrnil besedila (morda samo "thinking" blok?): ${JSON.stringify(data).slice(0, 500)}`
+    );
+  }
 
+  let shortText: string | undefined;
+  let caption: string | undefined;
+  let editSuggestion: string | undefined;
   try {
     const parsed = extractJson<{
       shortText?: string;
       caption?: string;
       editSuggestion?: string;
     }>(text);
-    const shortText = typeof parsed.shortText === "string" ? parsed.shortText : undefined;
-    const caption = typeof parsed.caption === "string" ? parsed.caption : undefined;
-    return {
-      shortText,
-      // STORY + IMAGE ne vrne "caption" (glej captionPrompt.ts) - caption
-      // polje na proposalu naj kljub temu ne bo prazno, zato se v tem
-      // primeru zrcali iz shortText.
-      caption: caption ?? shortText ?? "",
-      editSuggestion:
-        typeof parsed.editSuggestion === "string" ? parsed.editSuggestion : undefined,
-    };
+    shortText = typeof parsed.shortText === "string" ? parsed.shortText : undefined;
+    caption = typeof parsed.caption === "string" ? parsed.caption : undefined;
+    editSuggestion = typeof parsed.editSuggestion === "string" ? parsed.editSuggestion : undefined;
   } catch (error) {
     console.error("draftCaption: failed to parse model output", error, text);
     // Model ni vrnil čistega JSON-a - uporabi surovo besedilo kot caption,
     // da predlog vseeno pride do Urha (namesto da cron pade).
-    return { caption: text };
+    caption = text;
   }
+
+  // STORY + IMAGE ne vrne "caption" (glej captionPrompt.ts) - caption polje
+  // na proposalu naj kljub temu ne bo prazno, zato se v tem primeru
+  // zrcali iz shortText.
+  const finalCaption = caption ?? shortText ?? "";
+  if (!finalCaption) {
+    throw new Error(`draftCaption: prazen rezultat po parsanju. Surovo besedilo: ${text.slice(0, 500)}`);
+  }
+
+  return { shortText, caption: finalCaption, editSuggestion };
 }

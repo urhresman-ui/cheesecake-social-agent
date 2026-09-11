@@ -1,5 +1,6 @@
 import type { DriveFile } from "@/lib/drive";
 import { extractJson } from "@/lib/social/json";
+import { extractAnthropicText } from "@/lib/social/anthropic";
 import { makeThumbnailBase64 } from "@/lib/social/thumbnail";
 
 const MAX_CANDIDATES = 20;
@@ -83,7 +84,7 @@ export async function pickBestImage(candidates: DriveFile[]): Promise<RankedPick
     }
 
     const data = await response.json();
-    const text: string = data.content?.[0]?.text?.trim() ?? "{}";
+    const text: string = extractAnthropicText(data) || "{}";
     const parsed = extractJson<{
       groups?: Array<{ fileIds: string[]; bestFileId: string }>;
       recommendedFileId?: string;
