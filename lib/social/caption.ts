@@ -3,7 +3,8 @@ import { extractJson } from "@/lib/social/json";
 import { extractAnthropicText } from "@/lib/social/anthropic";
 import { getRecentFeedCaptions } from "@/lib/social/feed";
 import { makeThumbnailBase64 } from "@/lib/social/thumbnail";
-import type { ContentType } from "@/lib/social/store";
+import { feedbackPromptSection } from "@/lib/social/feedback";
+import { getDecidedProposals, type ContentType } from "@/lib/social/store";
 
 export type DraftedCaption = {
   shortText?: string;
@@ -17,8 +18,16 @@ export async function draftCaption(params: {
   fileName: string;
   driveFileId: string;
 }): Promise<DraftedCaption> {
-  const recentCaptions = await getRecentFeedCaptions();
-  const system = buildCaptionPrompt({ ...params, recentCaptions });
+  const [recentCaptions, decided] = await Promise.all([
+    getRecentFeedCaptions(),
+    // Povratna informacija je "nice to have" - napaka ne sme podreti predloga.
+    getDecidedProposals(params.type).catch((error) => {
+      console.error("draftCaption: failed to load feedback", error);
+      return [];
+    }),
+  ]);
+  const feedback = feedbackPromptSection(decided);
+  const system = buildCaptionPrompt({ ...params, recentCaptions, feedback });
 
   const content: Array<Record<string, unknown>> = [
     {

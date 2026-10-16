@@ -36,7 +36,7 @@ export async function selectUnusedContent(
 
   let bestImage: (DriveFile & { siblingFileIds: string[] }) | null = null;
   if (images.length > 0) {
-    const ranked = await pickBestImage(images);
+    const ranked = await pickBestImage(images, type);
     if (ranked) {
       const file = images.find((f) => f.id === ranked.chosenId);
       if (file) {

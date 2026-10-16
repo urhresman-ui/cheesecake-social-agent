@@ -31,7 +31,17 @@ export type Proposal = {
    * bilo podobnih kandidatov.
    */
   siblingFileIds?: string[];
+  /**
+   * Agentov izvirni predlog besedila (preden ga je Urh morda popravil na
+   * /pregled). Razlika med tem in končnim caption/shortText pove agentu,
+   * kaj je Urh popravil - glej lib/social/feedback.ts.
+   */
+  draftedCaption?: string;
+  draftedShortText?: string;
+  /** Neobvezen razlog, ki ga Urh vpiše ob zavrnitvi. */
+  rejectReason?: string;
   createdAt: number;
+  /** Čas odločitve (potrditev ALI zavrnitev). */
   completedAt?: number;
 };
 
@@ -45,12 +55,17 @@ function getRedis() {
 }
 
 export async function createProposal(
-  input: Omit<Proposal, "id" | "status" | "createdAt">
+  input: Omit<
+    Proposal,
+    "id" | "status" | "createdAt" | "draftedCaption" | "draftedShortText" | "rejectReason"
+  >
 ): Promise<Proposal> {
   const proposal: Proposal = {
     ...input,
     id: randomUUID(),
     status: "pending",
+    draftedCaption: input.caption,
+    draftedShortText: input.shortText,
     createdAt: Date.now(),
   };
   const redis = getRedis();
@@ -82,7 +97,9 @@ export async function listProposals(status?: ProposalStatus): Promise<Proposal[]
 
 export async function updateProposal(
   id: string,
-  patch: Partial<Pick<Proposal, "status" | "caption" | "shortText" | "completedAt">>
+  patch: Partial<
+    Pick<Proposal, "status" | "caption" | "shortText" | "completedAt" | "rejectReason">
+  >
 ): Promise<Proposal | null> {
   const existing = await getProposal(id);
   if (!existing) return null;
@@ -90,6 +107,18 @@ export async function updateProposal(
   const redis = getRedis();
   await redis.set(PROPOSAL_KEY(id), JSON.stringify(updated));
   return updated;
+}
+
+/**
+ * Zadnji predlogi danega tipa, o katerih je Urh že odločil (potrdil ali
+ * zavrnil), od najnovejšega naprej - vir povratne informacije za agenta.
+ */
+export async function getDecidedProposals(type: ContentType, limit = 12): Promise<Proposal[]> {
+  const all = await listProposals();
+  return all
+    .filter((p) => p.type === type && (p.status === "done" || p.status === "rejected"))
+    .sort((a, b) => (b.completedAt ?? b.createdAt) - (a.completedAt ?? a.createdAt))
+    .slice(0, limit);
 }
 
 export async function getUsedFileIds(type: ContentType): Promise<Set<string>> {

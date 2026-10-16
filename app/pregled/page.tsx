@@ -28,6 +28,8 @@ function ProposalCard({
   const [busy, setBusy] = useState<"complete" | "reject" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [gone, setGone] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
 
   async function persistIfChanged() {
     await fetch(`/api/social/proposals/${proposal.id}`, {
@@ -73,7 +75,7 @@ function ProposalCard({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ proposalId: proposal.id }),
+        body: JSON.stringify({ proposalId: proposal.id, reason: rejectReason }),
       });
       if (!response.ok) throw new Error(await response.text());
       setGone(true);
@@ -162,6 +164,19 @@ function ProposalCard({
 
       {error && <p className="text-xs text-red-700">{error}</p>}
 
+      {rejecting && (
+        <label className="text-xs text-ink-soft">
+          Zakaj ni dobro? (neobvezno, agent se iz tega uči)
+          <textarea
+            className="mt-1 w-full rounded border border-gold-soft bg-paper p-2 text-sm"
+            rows={2}
+            placeholder="npr. slaba fotografija, preveč patetično, napačen okus ..."
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+          />
+        </label>
+      )}
+
       <div className="flex gap-2">
         <button
           className="btn-primary flex-1 rounded px-3 py-2 text-sm disabled:opacity-40"
@@ -173,9 +188,9 @@ function ProposalCard({
         <button
           className="btn-secondary rounded px-3 py-2 text-sm disabled:opacity-40"
           disabled={busy !== null}
-          onClick={reject}
+          onClick={rejecting ? reject : () => setRejecting(true)}
         >
-          {busy === "reject" ? "..." : "Zavrni"}
+          {busy === "reject" ? "..." : rejecting ? "Potrdi zavrnitev" : "Zavrni"}
         </button>
       </div>
     </div>

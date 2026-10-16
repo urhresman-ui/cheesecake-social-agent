@@ -99,9 +99,11 @@ export function buildCaptionPrompt(params: {
   kind: "IMAGE" | "VIDEO";
   fileName: string;
   recentCaptions?: string[];
+  /** Že sestavljen razdelek iz lib/social/feedback.ts (lahko prazen). */
+  feedback?: string;
 }): string {
-  const { type, kind, recentCaptions = [] } = params;
-  const recent = recentPostsSection(recentCaptions);
+  const { type, kind, recentCaptions = [], feedback = "" } = params;
+  const recent = recentPostsSection(recentCaptions) + feedback;
   const seesImage =
     kind === "IMAGE"
       ? "Priložena ti je tudi dejanska fotografija - poglej jo, preden pišeš."
